@@ -60,6 +60,7 @@ async function run() {
 
     const queryCollection = client.db('queryDB').collection('query');
     const recommendationCollection = client.db('queryDB').collection('recommendations');
+    const reviewCollection = client.db('queryDB').collection('review');
 //  auth related api
 app.post('/jwt',logger, async(req,res) =>{
   const user = req.body;
@@ -250,6 +251,11 @@ app.post('/jwt',logger, async(req,res) =>{
       }
     });
     
+    app.get('/reviews', async (req, res) => {
+
+      const result = await reviewCollection.find({}).toArray();
+      res.send(result);
+    })
 
 
     
