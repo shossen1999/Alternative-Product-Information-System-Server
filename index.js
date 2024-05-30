@@ -1,14 +1,44 @@
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
+const cookieParser=require('cookie-parser');
 require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 5000;
 
 // middleware 
-app.use(cors());
+app.use(cors({
+  origin:['http://localhost:5173','http://localhost:5174'],
+  credentials:true
+}))
 app.use(express.json());
+app.use(cookieParser());
 
+// middlewares making by user
+const logger = async(req,res,next)=>{
+  console.log('called:', req.host, req.originalUrl);
+  next()
+}
+const verifyToken = async(req,res,next)=>{
+  const token = req.cookies?.token;
+  console.log('value of token in middleware ',token);
+ if(!token){
+  return res.status(401).send({message:'not authorized'})
+ }
+ jwt.verify(token,process.env.ACCESS_TOKEN_SECRET, (err,decoded)=>{
+  // error
+if(err){
+  console.log(err);
+  return res.status(401).send({message:'not authorized'})
+}
+  // if token is valid then it would be decoded
+  console.log('value in the token ',decoded);
+  req.user=decoded;
+  next()
+ })
+  
+}
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.wzcn8fz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -30,11 +60,26 @@ async function run() {
 
     const queryCollection = client.db('queryDB').collection('query');
     const recommendationCollection = client.db('queryDB').collection('recommendations');
+//  auth related api
+app.post('/jwt',logger, async(req,res) =>{
+  const user = req.body;
+  console.log('user for token', user);
+  const token = jwt.sign(user,process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+  res
+        .cookie('token', token, {
+          httpOnly: true,
+          secure: false,
+          // sameSite:'none'
+          
+        })
+        .send({ success: true });
 
 
+})
 
 
-    app.get('/Queries', async (req, res) => {
+      // service related api
+    app.get('/Queries',logger, async (req, res) => {
 
       const result = await queryCollection.find({}).toArray();
       res.send(result);
@@ -46,9 +91,12 @@ async function run() {
       res.send(result);
     })
 
-    app.get('/Queries/user/:email', async (req, res) => {
+    app.get('/Queries/user/:email',logger,verifyToken, async (req, res) => {
       const email = req.params.email;
+      // console.log('tok tok token', req.cookies.token);
+     
       const query = { email: email }
+     
       const result = await queryCollection.find(query).toArray();
       res.send(result);
     })
