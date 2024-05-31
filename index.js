@@ -154,7 +154,7 @@ app.post('/jwt',logger, async(req,res) =>{
       try {
         const recentQueries = await queryCollection.find()
           .sort({ currentDate: -1 })
-          .limit(6)
+          .limit(8)
           .toArray();
         res.send(recentQueries);
       } catch (err) {
@@ -165,6 +165,7 @@ app.post('/jwt',logger, async(req,res) =>{
     app.post('/addRecommendation', async (req, res) => {
       const recommendation = req.body;
       const { queryId } = recommendation;
+
       try {
         // Insert the recommendation
         const result = await recommendationCollection.insertOne(recommendation);
