@@ -92,9 +92,9 @@ app.post('/jwt',logger, async(req,res) =>{
       res.send(result);
     })
 
-    app.get('/Queries/user/:email',logger,verifyToken, async (req, res) => {
+    app.get('/Queries/user/:email',logger, async (req, res) => {
       const email = req.params.email;
-      // console.log('tok tok token', req.cookies.token);
+      console.log('tok tok token', req.cookies.token);
      
       const query = { email: email }
      
@@ -167,10 +167,10 @@ app.post('/jwt',logger, async(req,res) =>{
       const { queryId } = recommendation;
 
       try {
-        // Insert the recommendation
+        
         const result = await recommendationCollection.insertOne(recommendation);
 
-        // Update the query's recommendation count
+       
         const updateResult = await queryCollection.updateOne(
           { _id: new ObjectId(queryId) },
           { $inc: { recommendationCount: 1 } }
@@ -199,7 +199,7 @@ app.post('/jwt',logger, async(req,res) =>{
     });
 
 
-     // New route to get recommendations by recommender's email
+     
      app.get('/recommendations/user/:email', async (req, res) => {
       try {
         const email = req.params.email;
@@ -224,7 +224,7 @@ app.post('/jwt',logger, async(req,res) =>{
       try {
         const recommendationId = req.params.id;
 
-        // Find the recommendation before deleting
+        
         const recommendation = await recommendationCollection.findOne({ _id: new ObjectId(recommendationId) });
 
         if (!recommendation) {
@@ -233,11 +233,11 @@ app.post('/jwt',logger, async(req,res) =>{
 
         const queryId = recommendation.queryId;
 
-        // Delete the recommendation
+  
         const deleteResult = await recommendationCollection.deleteOne({ _id: new ObjectId(recommendationId) });
 
         if (deleteResult.deletedCount > 0) {
-          // Decrease the recommendation count in the related query
+         
           const updateResult = await queryCollection.updateOne(
             { _id: new ObjectId(queryId) },
             { $inc: { recommendationCount: -1 } }
